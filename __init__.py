@@ -1,2 +1,3 @@
 
-from pybakalib.bakalogin import BakaAccount
+from pybakalib.bakalari import BakaAccount
+from pybakalib import marks
