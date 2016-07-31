@@ -16,15 +16,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Pybakalib.  If not, see <http://www.gnu.org/licenses/>.
 """
-from errors import BakalariError
 
 
-class Profile(object):
-    def __init__(self, module_login):
-        if module_login['results']['result'] != '01':
-            raise BakalariError('Server error')
-        self.name = module_login['results']['jmeno']
-        self.school = module_login['results']['skola']
-        self.available_modules = [x for x in module_login['results']['moduly'].split('*') if x != '']
+class BakalariError(Exception):
+    pass
 
 
+class LoginError(Exception):
+    pass

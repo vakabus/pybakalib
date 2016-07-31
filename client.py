@@ -20,8 +20,14 @@ import xml.etree.ElementTree as ET
 import requests
 
 import xmltodict as xmltodict
+from requests import RequestException
+
 import auth
+from errors import LoginError, BakalariError
 from modules import MODULES
+
+
+MAX_RETRIES = 5
 
 
 class BakaClient(object):
@@ -43,9 +49,16 @@ class BakaClient(object):
     def get_resource(self, params):
         if self.token is not None:
             params['hx'] = self.token
-        req = requests.get(self.url + 'login.aspx', params)
-        req.encoding = 'utf8'
-        return req.text
+
+        for i in range(MAX_RETRIES):
+            try:
+                req = requests.get(self.url + 'login.aspx', params)
+                if req.status_code == 200:
+                    req.encoding = 'utf8'
+                    return req.text
+            except RequestException:
+                pass
+        raise BakalariError('Could not contact server successfully')
 
     def login(self, *args, **kargs):
         self.token = auth.get_token(self, *args, **kargs)
@@ -53,13 +66,10 @@ class BakaClient(object):
             raise auth.LoginError('Invalid username')
 
         try:
-            login_xml = self.get_resource({'pm': 'login'})
-            root = ET.fromstring(login_xml)
-            if root.find('result').text != '01':
-                raise auth.LoginError('Invalid password.')
-            self.__available_modules = list(filter(lambda x: len(x) > 0, root.find('moduly').text.split('*')))
-        except ET.ParseError as orig:
-            raise ConnectionError('Response from server was invalid. Try again.') from orig
+            profile = self.get_module('login')
+            self.__available_modules = profile.available_modules
+        except BakalariError as orig:
+            raise LoginError('Invalid password.') from orig
 
     def is_module_available(self, name):
         return name in self.__available_modules

@@ -24,9 +24,6 @@ import hashlib
 import datetime
 
 
-class LoginError(Exception):
-    pass
-
 def get_token(client, *args):
     """
     Returns login token for user. The method requires client object and one or two string arguments:
