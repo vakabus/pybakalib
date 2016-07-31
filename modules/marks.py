@@ -21,9 +21,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 
 
-
 class MarksModule(object):
-
     def __init__(self, client):
         xml_marks = client.get_module_xml('znamky')
         xml_mark_weights = client.get_module_xml('predvidac')
@@ -55,7 +53,6 @@ class MarksModule(object):
 
 
 class Subject(object):
-
     def __init__(self, xml_root):
         self.marks = []
         self.name = xml_root.find('nazev').text
@@ -67,13 +64,14 @@ class Subject(object):
 
     def add_mark(self, mark):
         self.marks.append(mark)
+
     def get_marks(self):
         return self.marks
 
-    """
-    Returns weighted average of marks. If there are no marks, returns -1.
-    """
     def get_weighted_average(self, weights, up_to=-1):
+        """
+        Returns weighted average of marks. If there are no marks, returns -1.
+        """
         up_to = len(self.marks) if up_to == -1 else up_to
 
         w_sum = sum([s.get_weight(weights) for s in self.marks[:up_to]])
@@ -84,13 +82,19 @@ class Subject(object):
         else:
             return a_sum / w_sum
 
+
 class Mark(object):
-    def __init__(self, xml_mark):
-        self.mark = xml_mark.find('znamka').text
-        self.caption = xml_mark.find('caption').text
-        self.description = xml_mark.find('poznamka').text
-        self.label = xml_mark.find('ozn').text
-        self.date = datetime.strptime(xml_mark.find('udeleno').text, "%y%m%d%H%M")
+    def __init__(self, xml_mark, mark=1, label='pololetní práce'):
+        if xml_mark is None:
+            self.mark = mark
+            self.label = label
+        else:
+            self.mark = xml_mark.find('znamka').text
+            self.caption = xml_mark.find('caption').text
+            self.description = xml_mark.find('poznamka').text
+            self.label = xml_mark.find('ozn').text
+            self.date = datetime.strptime(xml_mark.find('udeleno').text, "%y%m%d%H%M")
+
     def __float__(self):
         try:
             return float(self.mark.replace('-', '.5'))

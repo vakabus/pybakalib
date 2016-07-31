@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Pybakalib.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pybakalib import Client
-from pybakalib import modules
+from ..client import BakaClient as Client
+from .. import modules
 import getpass
 
 print('This is an example how you could use this library. Please log in.')
@@ -32,8 +32,22 @@ client.login(username, password)
 #print('\nXML marks data')
 #print(b.get_module_xml('znamky'))
 
+nmark = input('\nWhat mark do you expect to get: ')
+nweight = int(input('What weight do you expect: '))
+
 print('\nWeighted averages of marks')
 marks = modules.MarksModule(client)
+
+label = ''
+for k in marks.weights:
+    if marks.weights[k] == nweight:
+        label = k
+        break
+
+nm = modules.marks.Mark(None, mark=nmark, label=label)
+
+for x in range(len(marks.subjects)):
+    marks.subjects[x].marks.append(nm)
 
 averages = [ (subj.abbreviation, round(subj.get_weighted_average(marks.weights), 2)) for subj in marks.subjects]
 averages.sort(key=lambda x: x[1])

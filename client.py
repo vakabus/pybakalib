@@ -16,38 +16,35 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Pybakalib.  If not, see <http://www.gnu.org/licenses/>.
 """
-
-
-
-
 import xml.etree.ElementTree as ET
-import urllib.request
-import urllib.parse
+import requests
 
-from . import auth
+import xmltodict as xmltodict
+import auth
 
 
 class BakaClient(object):
     def __init__(self, url):
         self.url = BakaClient._fix_url(url)
         self.token = None
-        self.available_modules = {}
+        self.available_modules = set()
+        self.cache = {}
 
     @staticmethod
     def _fix_url(url):
         if not url.startswith('http'):
             url = 'http://' + url
-        url = url.replace('login.aspx','')
+        url = url.replace('login.aspx', '')
         if not url.endswith('/'):
-            url = url + '/'
+            url += '/'
         return url
 
     def get_resource(self, params):
-        if not self.token is None:
+        if self.token is not None:
             params['hx'] = self.token
-        url = self.url + 'login.aspx?' + urllib.parse.urlencode(params)
-        with urllib.request.urlopen(url) as req:
-            return req.read().decode('utf8')
+        req = requests.get(self.url + 'login.aspx', params)
+        req.encoding = 'utf8'
+        return req.text
 
     def login(self, *args, **kargs):
         self.token = auth.get_token(self, *args, **kargs)
@@ -55,20 +52,29 @@ class BakaClient(object):
             raise auth.LoginError('Invalid username')
 
         try:
-            login_xml = self.get_resource({'pm':'login'})
+            login_xml = self.get_resource({'pm': 'login'})
             root = ET.fromstring(login_xml)
             if root.find('result').text != '01':
                 raise auth.LoginError('Invalid password.')
-            self.available_modules = list(filter(lambda x: len(x) > 0,root.find('moduly').text.split('*')))
-        except ParseError as orig:
+            self.available_modules = list(filter(lambda x: len(x) > 0, root.find('moduly').text.split('*')))
+        except ET.ParseError as orig:
             raise ConnectionError('Response from server was invalid. Try again.') from orig
 
     def is_module_available(self, name):
         return name in self.available_modules
 
     def get_module_xml(self, module_name):
+        if module_name in self.cache:
+            return self.cache[module_name]
         if not self.is_module_available(module_name):
             raise NotImplementedError('Server does not support such an operation')
 
         module_xml = self.get_resource({'pm': module_name})
+        self.cache[module_name] = module_xml
         return module_xml
+
+    def get_module(self, module_name):
+        return xmltodict.parse(
+            self.get_module(module_name),
+            encoding='utf8'
+        )

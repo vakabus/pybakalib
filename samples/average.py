@@ -17,22 +17,25 @@ You should have received a copy of the GNU General Public License
 along with Pybakalib.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from . import bakalari
+from ..client import BakaClient as Client
+from .. import modules
+import getpass
 
 print('This is an example how you could use this library. Please log in.')
 url      = input('URL: ')
 username = input('Username: ')
-password = input('Password: ')
+password = getpass.getpass('Password: ')
 
-b = bakalari.BakaAccount(url,username=username,password=password)
+client = Client(url)
+client.login(username, password)
 
 #print('\nXML marks data')
 #print(b.get_module_xml('znamky'))
 
 print('\nWeighted averages of marks')
-marks = b.get_marks()
+marks = modules.MarksModule(client)
 
-averages = [ (subj.abbreviation, round(subj.get_weighted_average(),2)) for subj in marks.subjects]
+averages = [ (subj.abbreviation, round(subj.get_weighted_average(marks.weights), 2)) for subj in marks.subjects]
 averages.sort(key=lambda x: x[1])
 for abbr, aver in averages:
     print(abbr + '\t' + str(aver))
