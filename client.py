@@ -8,7 +8,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-Foobar is distributed in the hope that it will be useful,
+Pybakalib is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -21,14 +21,15 @@ import requests
 
 import xmltodict as xmltodict
 import auth
+from modules import MODULES
 
 
 class BakaClient(object):
     def __init__(self, url):
         self.url = BakaClient._fix_url(url)
         self.token = None
-        self.available_modules = set()
-        self.cache = {}
+        self.__available_modules = set()
+        self.__xml_cache = {}
 
     @staticmethod
     def _fix_url(url):
@@ -56,25 +57,27 @@ class BakaClient(object):
             root = ET.fromstring(login_xml)
             if root.find('result').text != '01':
                 raise auth.LoginError('Invalid password.')
-            self.available_modules = list(filter(lambda x: len(x) > 0, root.find('moduly').text.split('*')))
+            self.__available_modules = list(filter(lambda x: len(x) > 0, root.find('moduly').text.split('*')))
         except ET.ParseError as orig:
             raise ConnectionError('Response from server was invalid. Try again.') from orig
 
     def is_module_available(self, name):
-        return name in self.available_modules
+        return name in self.__available_modules
 
     def get_module_xml(self, module_name):
-        if module_name in self.cache:
-            return self.cache[module_name]
+        if module_name in self.__xml_cache:
+            return self.__xml_cache[module_name]
         if not self.is_module_available(module_name):
-            raise NotImplementedError('Server does not support such an operation')
+            raise NotImplementedError('Server does not support module ' + module_name.upper())
 
         module_xml = self.get_resource({'pm': module_name})
-        self.cache[module_name] = module_xml
+        self.__xml_cache[module_name] = module_xml
         return module_xml
 
     def get_module(self, module_name):
-        return xmltodict.parse(
-            self.get_module(module_name),
-            encoding='utf8'
+        return MODULES[module_name](
+            xmltodict.parse(
+                self.get_module(module_name),
+                encoding='utf8'
+            )
         )

@@ -8,7 +8,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-Foobar is distributed in the hope that it will be useful,
+Pybakalib is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -17,17 +17,12 @@ You should have received a copy of the GNU General Public License
 along with Pybakalib.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import xml.etree.ElementTree as ET
 from datetime import datetime
 
 
 class MarksModule(object):
-    def __init__(self, client):
-        xml_marks = client.get_module_xml('znamky')
-        xml_mark_weights = client.get_module_xml('predvidac')
-
-        self.weights = MarksModule._parse_mark_weights(xml_mark_weights)
-        self.subjects = MarksModule._parse_subjects(xml_marks)
+    def __init__(self, module_marks):
+        self.subjects = MarksModule.__parse_subjects(module_marks)          # type: Dict[str, Subject]
 
     def get_subject(self, name):
         for subj in self.subjects:
@@ -35,34 +30,35 @@ class MarksModule(object):
                 return subj
         return None
 
-    @staticmethod
-    def _parse_subjects(xml_marks):
-        root = ET.fromstring(xml_marks)
-        subjects = []
-        for subject in root.find('predmety').findall('predmet'):
-            subjects.append(Subject(subject))
-        return subjects
+    def list_subject_names(self):
+        return self.subjects.keys()
+
+    def get_all_averages(self, weights):
+        averages = []
+        for subj in self.subjects:
+            averages.append((subj.name, subj.get_weighted_average(weights)))
+        averages.sort(key=lambda x: x[1])
+        return averages
 
     @staticmethod
-    def _parse_mark_weights(xml_mark_types):
-        root = ET.fromstring(xml_mark_types)
-        weights = {}
-        for typ in root.find('typypru').findall('typ'):
-            weights[typ.find('nazev').text] = int(typ.find('vaha').text)
-        return weights
+    def __parse_subjects(module_marks):
+        subjects = []
+        for subj in module_marks['results']['predmety']['predmet']:
+            subjects.append(Subject(subj))
+        return subjects
 
 
 class Subject(object):
-    def __init__(self, xml_root):
-        self.marks = []
-        self.name = xml_root.find('nazev').text
-        self.abbreviation = xml_root.find('zkratka').text
+    def __init__(self, dict_subject):
+        self.marks = []                                 # type: List[Mark]
+        self.name = dict_subject['nazev']               # type: str
+        self.abbreviation = dict_subject['zkratka']     # type: str
 
-        for mark in xml_root.find('znamky').findall('znamka'):
-            self.marks.append(Mark(mark))
+        for mark in dict_subject['znamky']['znamka']:
+            self.add_mark(Mark(mark))
         self.marks.sort(key=lambda x: x.date)
 
-    def add_mark(self, mark):
+    def add_mark(self, mark: Mark):
         self.marks.append(mark)
 
     def get_marks(self):
@@ -71,6 +67,7 @@ class Subject(object):
     def get_weighted_average(self, weights, up_to=-1):
         """
         Returns weighted average of marks. If there are no marks, returns -1.
+        :keyword up_to Optional number of marks from beginning, for which to calculate average.
         """
         up_to = len(self.marks) if up_to == -1 else up_to
 
@@ -78,22 +75,25 @@ class Subject(object):
         a_sum = sum([s.get_weight(weights) * float(s) for s in self.marks[:up_to]])
 
         if w_sum == 0:
-            return -1
+            return None
         else:
             return a_sum / w_sum
 
 
 class Mark(object):
-    def __init__(self, xml_mark, mark=1, label='pololetní práce'):
-        if xml_mark is None:
-            self.mark = mark
-            self.label = label
-        else:
-            self.mark = xml_mark.find('znamka').text
-            self.caption = xml_mark.find('caption').text
-            self.description = xml_mark.find('poznamka').text
-            self.label = xml_mark.find('ozn').text
-            self.date = datetime.strptime(xml_mark.find('udeleno').text, "%y%m%d%H%M")
+    def __init__(self, dict_mark, mark=1, label='pololetní práce'):
+        self.mark = mark                    # type: str
+        self.label = label                  # type: str
+        self.date = None                    # type: datetime
+        self.description = None             # type: str
+        self.caption = None                 # type: str
+
+        if dict_mark is not None:
+            self.mark = dict_mark['znamka']
+            self.caption = dict_mark['caption']
+            self.description = dict_mark['poznamka']
+            self.label = dict_mark['ozn']
+            self.date = datetime.strptime(dict_mark['udeleno'], "%y%m%d%H%M")
 
     def __float__(self):
         try:
