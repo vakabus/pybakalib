@@ -44,6 +44,7 @@ class MarksModule(object):
     def __parse_subjects(module_marks):
         subjects = []
         for subj in module_marks['results']['predmety']['predmet']:
+            pass
             subjects.append(Subject(subj))
         return subjects
 
@@ -54,11 +55,12 @@ class Subject(object):
         self.name = dict_subject['nazev']               # type: str
         self.abbreviation = dict_subject['zkratka']     # type: str
 
-        for mark in dict_subject['znamky']['znamka']:
-            self.add_mark(Mark(mark))
-        self.marks.sort(key=lambda x: x.date)
+        if 'znamky' in dict_subject and dict_subject['znamky'] is not None:     # check for empty subjects
+            for mark in dict_subject['znamky']['znamka']:
+                self.add_mark(Mark(mark))
+            self.marks.sort(key=lambda x: x.date)
 
-    def add_mark(self, mark: Mark):
+    def add_mark(self, mark):
         self.marks.append(mark)
 
     def get_marks(self):

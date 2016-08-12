@@ -16,15 +16,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Pybakalib.  If not, see <http://www.gnu.org/licenses/>.
 """
-from errors import BakalariError
 
+from distutils.core import setup
 
-class Profile(object):
-    def __init__(self, module_login):
-        if module_login['results']['result'] != '01':
-            raise BakalariError('Server error')
-        self.name = module_login['results']['jmeno']
-        self.school = module_login['results']['skola']
-        self.available_modules = [x for x in module_login['results']['moduly'].split('*') if x != '']
-
-
+setup(name='pybakalib',
+    version='0.1',
+    description='Python Bakalari client',
+    author='Vaclav Sraier',
+    author_email='bakalari@vakabus.cz',
+    url='https://www.python.org/sigs/distutils-sig/',
+    packages=['pybakalib', 'pybakalib.modules']
+)

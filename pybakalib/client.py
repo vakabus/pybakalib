@@ -22,10 +22,9 @@ import requests
 import xmltodict as xmltodict
 from requests import RequestException
 
-import auth
-from errors import LoginError, BakalariError
-from modules import MODULES
-
+from pybakalib import auth
+from pybakalib.errors import BakalariError, LoginError
+from pybakalib.modules import MODULES
 
 MAX_RETRIES = 5
 
@@ -52,7 +51,7 @@ class BakaClient(object):
 
         for i in range(MAX_RETRIES):
             try:
-                req = requests.get(self.url + 'login.aspx', params)
+                req = requests.get(self.url + 'login.aspx', params=params)
                 if req.status_code == 200:
                     req.encoding = 'utf8'
                     return req.text
@@ -63,16 +62,16 @@ class BakaClient(object):
     def login(self, *args, **kargs):
         self.token = auth.get_token(self, *args, **kargs)
         if self.token is None:
-            raise auth.LoginError('Invalid username')
+            raise LoginError('Invalid username')
 
         try:
             profile = self.get_module('login')
-            self.__available_modules = profile.available_modules
+            self.__available_modules = set(profile.available_modules)
         except BakalariError as orig:
             raise LoginError('Invalid password.') from orig
 
     def is_module_available(self, name):
-        return name in self.__available_modules
+        return name == 'login' or name in self.__available_modules
 
     def get_module_xml(self, module_name):
         if module_name in self.__xml_cache:
@@ -87,7 +86,7 @@ class BakaClient(object):
     def get_module(self, module_name):
         return MODULES[module_name](
             xmltodict.parse(
-                self.get_module(module_name),
-                encoding='utf8'
+                self.get_module_xml(module_name),
+                encoding='cp1250'
             )
         )
