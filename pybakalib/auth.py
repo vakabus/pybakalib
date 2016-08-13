@@ -30,11 +30,11 @@ def get_token(client, *args):
         one string argument -> hash level one, returns hash level two and does not use client (can be None)
         two string arguments -> username and password, uses client to acquire salt and hashes it together
 
-        :returns: string of level two hash used for authentication
+        :returns: tuple of two strings - level one hash and level two hash
 
     """
     if len(args) == 1:
-        return __get_hash_level_2(args[0])
+        return (args[0], __get_hash_level_2(args[0]))
 
     elif len(args) == 2:
         username = args[0]
@@ -47,7 +47,7 @@ def get_token(client, *args):
 
         hash_level_1 = __get_hash_level_1(username, password, salt)
         hash_level_2 = __get_hash_level_2(hash_level_1)
-        return hash_level_2
+        return (hash_level_1, hash_level_2)
     else:
         raise AttributeError('Invalid argument count. Expected 1 or 2 arguments.')
 

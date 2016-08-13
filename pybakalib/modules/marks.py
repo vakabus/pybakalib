@@ -37,7 +37,7 @@ class MarksModule(object):
         averages = []
         for subj in self.subjects:
             averages.append((subj.name, subj.get_weighted_average(weights)))
-        averages.sort(key=lambda x: x[1])
+        averages.sort(key=lambda x: x[1] if x[1] is not None else float('-inf'), reverse=True)
         return averages
 
     @staticmethod
@@ -79,7 +79,7 @@ class Subject(object):
         if w_sum == 0:
             return None
         else:
-            return a_sum / w_sum
+            return round(a_sum / w_sum, 2)
 
 
 class Mark(object):

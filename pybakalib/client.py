@@ -32,6 +32,7 @@ MAX_RETRIES = 5
 class BakaClient(object):
     def __init__(self, url):
         self.url = BakaClient._fix_url(url)
+        self.token_perm = None
         self.token = None
         self.__available_modules = set()
         self.__xml_cache = {}
@@ -60,7 +61,9 @@ class BakaClient(object):
         raise BakalariError('Could not contact server successfully')
 
     def login(self, *args, **kargs):
-        self.token = auth.get_token(self, *args, **kargs)
+        tkns = auth.get_token(self, *args, **kargs)
+        self.token_perm = tkns[0]
+        self.token = tkns[1]
         if self.token is None:
             raise LoginError('Invalid username')
 
