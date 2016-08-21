@@ -77,7 +77,7 @@ def __get_hash_level_1(username, password, salt):
     In the Android application, this hash is stored in its config files.
     """
     passw = (salt + password).encode('utf8')
-    ha = base64.urlsafe_b64encode(hashlib.sha512(passw).digest())
+    ha = base64.b64encode(hashlib.sha512(passw))
     return '*login*' + username + '*pwd*' + ha.decode('utf8') + '*sgn*ANDR'
 
 
