@@ -20,33 +20,27 @@ along with Pybakalib.  If not, see <http://www.gnu.org/licenses/>.
 from datetime import datetime
 
 
-class MarksModule(object):
+class MarksModule(list):
     def __init__(self, module_marks):
-        self.subjects = MarksModule.__parse_subjects(module_marks)          # type: Dict[str, Subject]
+        super(MarksModule, self).__init__()
+        for subj in module_marks['results']['predmety']['predmet']:
+            self.append(Subject(subj))
 
     def get_subject(self, name):
-        for subj in self.subjects:
+        for subj in self:
             if subj.name == name:
                 return subj
         return None
 
     def list_subject_names(self):
-        return self.subjects.keys()
+        return [subj.name for subj in self]
 
     def get_all_averages(self, weights):
         averages = []
-        for subj in self.subjects:
+        for subj in self:
             averages.append((subj.name, subj.get_weighted_average(weights)))
         averages.sort(key=lambda x: x[1] if x[1] is not None else float('-inf'), reverse=True)
         return averages
-
-    @staticmethod
-    def __parse_subjects(module_marks):
-        subjects = []
-        for subj in module_marks['results']['predmety']['predmet']:
-            pass
-            subjects.append(Subject(subj))
-        return subjects
 
 
 class Subject(object):

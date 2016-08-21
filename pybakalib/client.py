@@ -62,10 +62,10 @@ class BakaClient(object):
 
     def login(self, *args, **kargs):
         tkns = auth.get_token(self, *args, **kargs)
+        if tkns is None:
+            raise LoginError('Invalid username')
         self.token_perm = tkns[0]
         self.token = tkns[1]
-        if self.token is None:
-            raise LoginError('Invalid username')
 
         try:
             profile = self.get_module('login')
