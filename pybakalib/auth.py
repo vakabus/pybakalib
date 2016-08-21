@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Pybakalib.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-
 import xml.etree.ElementTree as ET
 import base64
 import hashlib
@@ -77,7 +76,7 @@ def __get_hash_level_1(username, password, salt):
     In the Android application, this hash is stored in its config files.
     """
     passw = (salt + password).encode('utf8')
-    ha = base64.b64encode(hashlib.sha512(passw))
+    ha = base64.b64encode(hashlib.sha512(passw).digest())
     return '*login*' + username + '*pwd*' + ha.decode('utf8') + '*sgn*ANDR'
 
 
@@ -87,6 +86,6 @@ def __get_hash_level_2(hash_level_1):
      hash and current date.
     """
     now = datetime.datetime.now()
-    date = '{:04}{:02}{:02}'.format(now.year,now.month,now.day)
+    date = '{:04}{:02}{:02}'.format(now.year, now.month, now.day)
     l2 = hashlib.sha512((hash_level_1 + date).encode('utf8')).digest()
     return base64.urlsafe_b64encode(l2).decode('utf8')
