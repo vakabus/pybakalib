@@ -21,6 +21,9 @@ from datetime import datetime
 
 class NoticeBoard(list):
     def __init__(self, module_notice_board):
+        super(NoticeBoard, self).__init__()
+        if module_notice_board['results']['zpravy'] is None:
+            return
         for notice in module_notice_board['results']['zpravy']['zprava']:
             self.append(NoticeBoardMessage(notice))
         self.sort(key=lambda x: x.date, reverse=True)

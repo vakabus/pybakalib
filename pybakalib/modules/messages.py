@@ -22,6 +22,8 @@ from datetime import datetime
 class ReceivedMessages(list):
     def __init__(self, module_messages):
         super(ReceivedMessages, self).__init__()
+        if module_messages['results']['zpravy'] is None:
+            return
         for mess in module_messages['results']['zpravy']['zprava']:
             self.append(Message(mess))
         self.sort(key=lambda x: x.date, reverse=True)
