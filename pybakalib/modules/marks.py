@@ -23,6 +23,8 @@ from datetime import datetime
 class MarksModule(list):
     def __init__(self, module_marks):
         super(MarksModule, self).__init__()
+        if module_marks['results']['predmety'] is None:
+            return
         for subj in module_marks['results']['predmety']['predmet']:
             self.append(Subject(subj))
 
