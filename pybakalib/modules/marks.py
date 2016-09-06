@@ -50,13 +50,14 @@ class MarksModule(list):
 
 class Subject(object):
     def __init__(self, dict_subject):
-        print(dict_subject)
         self.marks = []                                 # type: List[Mark]
         self.name = dict_subject['nazev']               # type: str
         self.abbreviation = dict_subject['zkratka']     # type: str
 
         if 'znamky' in dict_subject and dict_subject['znamky'] is not None:     # check for empty subjects
-            for mark in dict_subject['znamky']['znamka']:
+            z = dict_subject['znamky']['znamka']
+            marks = z if isinstance(z, list) else [z]
+            for mark in marks:
                 self.add_mark(Mark(mark))
             self.marks.sort(key=lambda x: x.date)
 
