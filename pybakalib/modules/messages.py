@@ -24,7 +24,9 @@ class ReceivedMessages(list):
         super(ReceivedMessages, self).__init__()
         if module_messages['results']['zpravy'] is None:
             return
-        for mess in module_messages['results']['zpravy']['zprava']:
+        z = module_messages['results']['zpravy']['zprava']
+        board = z if isinstance(z, list) else [z]
+        for mess in board:
             self.append(Message(mess))
         self.sort(key=lambda x: x.date, reverse=True)
 

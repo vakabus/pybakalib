@@ -25,7 +25,10 @@ class MarksModule(list):
         super(MarksModule, self).__init__()
         if module_marks['results']['predmety'] is None:
             return
-        for subj in module_marks['results']['predmety']['predmet']:
+
+        s = module_marks['results']['predmety']['predmet']
+        subjects = s if isinstance(s, list) else [s]
+        for subj in subjects:
             self.append(Subject(subj))
 
     def get_subject(self, name):
@@ -47,6 +50,7 @@ class MarksModule(list):
 
 class Subject(object):
     def __init__(self, dict_subject):
+        print(dict_subject)
         self.marks = []                                 # type: List[Mark]
         self.name = dict_subject['nazev']               # type: str
         self.abbreviation = dict_subject['zkratka']     # type: str

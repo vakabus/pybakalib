@@ -24,7 +24,9 @@ class NoticeBoard(list):
         super(NoticeBoard, self).__init__()
         if module_notice_board['results']['zpravy'] is None:
             return
-        for notice in module_notice_board['results']['zpravy']['zprava']:
+        z = module_notice_board['results']['zpravy']['zprava']
+        board = z if isinstance(z, list) else [z]
+        for notice in board:
             self.append(NoticeBoardMessage(notice))
         self.sort(key=lambda x: x.date, reverse=True)
 
