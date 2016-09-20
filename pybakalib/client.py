@@ -16,14 +16,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Pybakalib.  If not, see <http://www.gnu.org/licenses/>.
 """
-import xml.etree.ElementTree as ET
-import requests
 
+import requests
 import xmltodict as xmltodict
+from xml.parsers.expat import ExpatError
 from requests import RequestException
 
 from pybakalib import auth
-from pybakalib.errors import BakalariError, LoginError
+from pybakalib.errors import BakalariError, LoginError, BakalariParseError
 from pybakalib.modules import MODULES
 
 MAX_RETRIES = 5
@@ -87,9 +87,13 @@ class BakaClient(object):
         return module_xml
 
     def get_module(self, module_name):
-        return MODULES[module_name](
-            xmltodict.parse(
-                self.get_module_xml(module_name),
-                encoding='cp1250'
+        xml = self.get_module_xml(module_name)
+        try:
+            return MODULES[module_name](
+                xmltodict.parse(
+                    xml,
+                    encoding='cp1250'
+                )
             )
-        )
+        except ExpatError as e:
+            raise BakalariParseError("Failed to parse module {}:\n\n{}".format(module_name, xml)) from e

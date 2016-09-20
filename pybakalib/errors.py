@@ -22,5 +22,12 @@ class BakalariError(Exception):
     pass
 
 
+class BakalariIOError(BakalariError):
+    pass
+
+
+class BakalariParseError(BakalariError):
+    pass
+
 class LoginError(Exception):
     pass
