@@ -20,6 +20,8 @@ along with Pybakalib.  If not, see <http://www.gnu.org/licenses/>.
 
 def parse_weights(module_weights) -> dict:
     weights = {}
-    for typ in module_weights['results']['typypru']['typ']:
+    w = module_weights['results']['typypru']['typ']
+    wl = w if isinstance(w, list) else [w]      # fixes when there is only one weight and it does not return a list
+    for typ in wl:
         weights[typ['nazev']] = int(typ['vaha'])
     return weights
