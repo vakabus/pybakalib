@@ -38,3 +38,4 @@ class Message(object):
         self.text = message['text']
         self.date = datetime.strptime(message['cas'], "%y%m%d%H%M")
         self.id = message['id']
+        self.has_attachment = message['files'] != '0'
