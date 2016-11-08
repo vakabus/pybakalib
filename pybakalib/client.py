@@ -86,7 +86,7 @@ class BakaClient(object):
         self.__xml_cache[module_name] = module_xml
         return module_xml
 
-    def get_module(self, module_name):
+    def get_module(self, module_name, retry=0):
         xml = self.get_module_xml(module_name)
         try:
             return MODULES[module_name](
@@ -95,5 +95,9 @@ class BakaClient(object):
                     encoding='cp1250'
                 )
             )
-        except ExpatError as e:
-            raise BakalariParseError("Failed to parse module {}:\n\n{}".format(module_name, xml)) from e
+        except (ExpatError, AttributeError) as e:
+            if retry > 3:
+                raise BakalariParseError("Failed to parse module {}:\n\n{}".format(module_name, xml)) from e
+            else:
+                del self.__xml_cache[module_name]
+                return self.get_module(module_name, retry=retry+1)
