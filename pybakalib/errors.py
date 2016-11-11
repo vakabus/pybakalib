@@ -29,5 +29,10 @@ class BakalariIOError(BakalariError):
 class BakalariParseError(BakalariError):
     pass
 
+
 class LoginError(Exception):
+    pass
+
+
+class BakalariModuleNotImplementedError(BakalariError):
     pass

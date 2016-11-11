@@ -23,7 +23,7 @@ from xml.parsers.expat import ExpatError
 from requests import RequestException
 
 from pybakalib import auth
-from pybakalib.errors import BakalariError, LoginError, BakalariParseError
+from pybakalib.errors import BakalariError, LoginError, BakalariParseError, BakalariModuleNotImplementedError
 from pybakalib.modules import MODULES
 
 MAX_RETRIES = 5
@@ -80,7 +80,7 @@ class BakaClient(object):
         if module_name in self.__xml_cache:
             return self.__xml_cache[module_name]
         if not self.is_module_available(module_name):
-            raise NotImplementedError('Server does not support module ' + module_name.upper())
+            raise BakalariModuleNotImplementedError('Server does not support module ' + module_name.upper())
 
         module_xml = self.get_resource({'pm': module_name})
         self.__xml_cache[module_name] = module_xml
@@ -97,7 +97,8 @@ class BakaClient(object):
             )
         except (ExpatError, AttributeError) as e:
             if retry > 3:
-                raise BakalariParseError("Failed to parse module {}:\n\n{}".format(module_name, xml)) from e
+                i = len(xml) if len(xml) < 80 else 80
+                raise BakalariParseError("Failed to parse module {}:\n\n{}".format(module_name, xml[:i])) from e
             else:
                 del self.__xml_cache[module_name]
                 return self.get_module(module_name, retry=retry+1)
