@@ -46,7 +46,7 @@ class BakaClient(object):
             url += '/'
         return url
 
-    def get_resource(self, params):
+    def get_resource(self, params) -> str:
         if self.token is not None:
             params['hx'] = self.token
 
@@ -83,6 +83,10 @@ class BakaClient(object):
             raise BakalariModuleNotImplementedError('Server does not support module ' + module_name.upper())
 
         module_xml = self.get_resource({'pm': module_name})
+
+        if module_xml.startswith('<!DOCTYPE HTML PUBLIC'):
+            raise BakalariParseException('Server returned HTML instead of requested XML...')
+
         self.__xml_cache[module_name] = module_xml
         return module_xml
 
@@ -95,7 +99,7 @@ class BakaClient(object):
                     encoding='cp1250'
                 )
             )
-        except (ExpatError, AttributeError) as e:
+        except (BakalariError, ExpatError, AttributeError) as e:
             if retry > 3:
                 i = len(xml) if len(xml) < 80 else 80
                 raise BakalariParseError("Failed to parse module {}:\n\n{}".format(module_name, xml[:i])) from e
