@@ -84,15 +84,14 @@ class BakaClient(object):
 
         module_xml = self.get_resource({'pm': module_name})
 
-        if module_xml.startswith('<!DOCTYPE HTML PUBLIC'):
-            raise BakalariParseException('Server returned HTML instead of requested XML...')
-
         self.__xml_cache[module_name] = module_xml
         return module_xml
 
     def get_module(self, module_name, retry=0):
         xml = self.get_module_xml(module_name)
         try:
+            if 'DOCTYPE HTML' in xml:
+                raise BakalariParseError('Server responded with HTML instead of XML...')
             return MODULES[module_name](
                 xmltodict.parse(
                     xml,
