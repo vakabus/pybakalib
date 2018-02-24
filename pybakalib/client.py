@@ -52,7 +52,7 @@ class BakaClient(object):
 
         for i in range(MAX_RETRIES):
             try:
-                req = requests.get(self.url + 'login.aspx', params=params)
+                req = requests.get(self.url + 'login.aspx', params=params, timeout=10)
                 if req.status_code == 200:
                     req.encoding = 'utf8'
                     return req.text
