@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Pybakalib.  If not, see <http://www.gnu.org/licenses/>.
 """
+from typing import Optional
 
 import requests
 import xmltodict as xmltodict
@@ -29,13 +30,25 @@ from pybakalib.modules import MODULES
 MAX_RETRIES = 5
 
 
+class ResponseCache(object):
+    def __init__(self):
+        self.__cache = {}
+        self.__cache.setdefault(None)
+
+    def store(self, url: str, token: str, module: str, data: str):
+        self.__cache["{}{}{}".format(url,token,module)] = data
+
+    def get(self, url: str, token: str, module: str) -> Optional[str]:
+        return self.__cache.get("{}{}{}".format(url, token, module))
+
+
 class BakaClient(object):
-    def __init__(self, url):
+    def __init__(self, url, cache=ResponseCache()):
         self.url = BakaClient._fix_url(url)
         self.token_perm = None
         self.token = None
         self.__available_modules = set()
-        self.__xml_cache = {}
+        self.__module_cache = cache
 
     @staticmethod
     def _fix_url(url):
@@ -77,31 +90,34 @@ class BakaClient(object):
         return name == 'login' or name in self.__available_modules
 
     def get_module_xml(self, module_name):
-        if module_name in self.__xml_cache:
-            return self.__xml_cache[module_name]
         if not self.is_module_available(module_name):
             raise BakalariModuleNotImplementedError('Server does not support module ' + module_name.upper())
 
         module_xml = self.get_resource({'pm': module_name})
 
-        self.__xml_cache[module_name] = module_xml
         return module_xml
 
     def get_module(self, module_name, retry=0):
-        xml = self.get_module_xml(module_name)
+        # Obtain module XML
+        xml = self.__module_cache.get(self.url, self.token_perm, module_name)
+        if xml is None:
+            xml = self.get_module_xml(module_name)
+
+        # Parse module XML
         try:
             if 'DOCTYPE HTML' in xml:
                 raise BakalariParseError('Server responded with HTML instead of XML...')
-            return MODULES[module_name](
+            result = MODULES[module_name](
                 xmltodict.parse(
                     xml,
-                    encoding='cp1250'
+                    #encoding='cp1250'          # I don't remember, why did I put it here. Now it looks like nonsense
                 )
             )
+            self.__module_cache.store(self.url, self.token_perm, module_name, xml)
+            return result
         except (BakalariError, ExpatError, AttributeError) as e:
             if retry > 3:
-                i = len(xml) if len(xml) < 80 else 80
+                i = len(xml) if len(xml) < 80 else 80  # append first 80 characters to the error msg
                 raise BakalariParseError("Failed to parse module {}:\n\n{}".format(module_name, xml[:i])) from e
             else:
-                del self.__xml_cache[module_name]
                 return self.get_module(module_name, retry=retry+1)
